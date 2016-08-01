@@ -1,0 +1,67 @@
+
+//@grey: #cccccc;
+@blue: #2185D0;
+
+@grey: rgba(255,255,255,.5);
+@lightGrey: #aaaaaa;
+
+body, html {
+    padding: 0;
+    margin: 0;
+    height: 100%;
+}
+
+.setup {
+    height: 100%;
+    padding: 20px;
+    color: white;
+    background: @blue;
+
+    h1 {
+        font-size: 3em;
+        text-align: center;
+        margin-top: 0px;
+        margin-bottom: 30px;
+    }
+
+    input {
+        text-align: center;
+    }
+
+    p {
+        text-align: center;
+    }
+
+    &-img {
+        display: block;
+        width: 70px;
+        height: 70px;
+        margin: auto;
+    }
+
+    &-form {
+        //padding-top: 40px;
+    }
+
+    &-submit {
+        &-content {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+        }
+
+
+        width: 100%!important;
+        display: block;
+    }
+
+    &-loading {
+        padding-top: 100px;
+    }
+}
+
+.preferences {
+    height: 100%;
+    padding: 20px;
+}

@@ -1,0 +1,31 @@
+<div class="setup">
+    <img src="img/nexus-white.png" class="setup-img">
+    <h1>Nexus</h1>
+
+    <div class="setup-form">
+        <form class="ui form">
+            <div class="field" ng-hide="loading">
+                <input type="text" name="name" ng-model="deviceName" placeholder="The name of your device">
+            </div>
+            <p ng-hide="loading">
+                Use a pretty good name, it will identify your computer on the network and everbody will see it ;).
+            </p>
+
+
+            <p ng-show="deviceName.length < 5" ng-hide="loading">One more thing, choose a name of at least 5 characters.</p>
+            <div class="setup-submit-content" ng-hide="loading">
+                <button class="ui button setup-submit" type="submit" ng-class="{'disabled':deviceName.length < 5}"  ng-click="ok()">This name is the chosen one</button>
+            </div>
+            <div class="ui active inverted loader big" ng-show="loading && state != 'detection-done'"></div>
+            <p class="setup-loading" ng-show="loading && state == 'registering'">
+                Registering online
+            </p>
+            <p class="setup-loading" ng-show="loading && state == 'detecting'">
+                Detecting devices
+            </p>
+            <p class="setup-loading" ng-show="loading && state == 'detection-done'">
+            </p>
+        </form>
+    </div>
+
+</div>
