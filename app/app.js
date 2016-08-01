@@ -235,7 +235,7 @@ app.on('ready', function () {
                 event.sender.send('registering');
                 register();
             });
-            console.log(err);
+            //console.log(err);
         } else {
             setupIcon();
             setupMenu(devices);
@@ -279,7 +279,7 @@ io.on('connection', function (socket) {
 
         if (null != deviceSrc) {
             switch (action.id) {
-                case 'file-transfer':
+                case 'transfer-file':
                     var filename = path.basename(action.meta.link);
                     var size = action.meta.size;
                     question= deviceSrc.name+' wants to send to you the file "'+filename+'". Do you accept the transfer ?';
