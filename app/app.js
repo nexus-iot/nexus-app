@@ -45,13 +45,22 @@ function setupMenu (devices) {
                     if (filenames.length == 0) {
                         return;
                     }
+                    console.log(filenames[0]);
                     var filename = filenames[0];
                     var socket = client('http://'+newDevice.privateIp+':'+port);
 
-                    var action = actions.ask(device.id, settings.get('name'), newDevice, []);
+                    var action = actions.ask(device.id, settings.get('name'), newDevice, filename, []);
                     socket.on('connect', function () {
                         socket.emit('ask', action.description);
                     });
+
+                    socket.on('connect_error', function (error) {
+                        console.log(error);
+                    });
+
+                    socket.on('connect_timeout', function () {
+                        console.log('timeout');
+                    })
 
                     socket.on('ok', function () {
                         action.state = 'enabled';
