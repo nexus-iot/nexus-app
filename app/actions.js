@@ -7,7 +7,7 @@ var actions = [];
 
 function generateLink (filename) {
     console.log(filename);
-    var hash = randomstring.generate(256);
+    var hash = randomstring.generate(64);
     var link = hash+'/'+path.basename(filename);
     var file = {
         link: link,
@@ -22,6 +22,8 @@ function ask(currentId, currentName, targetDevice, filename, rules) {
     //+'Teenage.Mutant.Ninja.Turtles.Out.of.the.Shadows.2016.720p.BrRip.x264.AAC-FXG.wmv';
 
     var link = generateLink(filename);
+    var stats = fs.statSync(filename)
+    var fileSizeInBytes = stats["size"];
 
     var action = {
         description: {
@@ -31,7 +33,8 @@ function ask(currentId, currentName, targetDevice, filename, rules) {
             },
             id: 'transfer-file',
             meta: {
-                link: link
+                link: link,
+                size: fileSizeInBytes
             }
         },
         state: 'standby',

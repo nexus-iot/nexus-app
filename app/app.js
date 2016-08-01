@@ -13,7 +13,8 @@ var device = require('nexus.io').device;
 var express = require('express')();
 var server = require('http').Server(express);
 var io = require('socket.io')(server);
-var client = require('socket.io-client');
+//var client = require('socket.io-client');
+
 
 //const clipboard = electron.clipboard;
 const path = require('path');
@@ -21,6 +22,7 @@ var fs = require('fs-extra');
 var settings = require('./settings');
 var actions = require('./actions');
 
+var icon = nativeImage.createFromPath(path.join(__dirname, '../ui/img/nexus-ubuntu.png'));
 var apiKey = "880eaa008f725db601350115c2b7943d6b94fc2dfb9fe70b5440fe6be4abc116";
 var isRegistered = false;
 var menu = new Menu();
@@ -31,6 +33,16 @@ var setupWindow = null;
 var preferencesWindow = null;
 
 var port = 8888;
+
+function findDevice (id) {
+    var deviceFound = null;
+    devices.forEach(function (device) {
+        if (device.id == id) {
+            deviceFound = device;
+        }
+    });
+    return deviceFound;
+}
 
 function setupMenu (devices) {
     menu = new Menu();
@@ -47,7 +59,12 @@ function setupMenu (devices) {
                     }
                     console.log(filenames[0]);
                     var filename = filenames[0];
-                    var socket = client('http://'+newDevice.privateIp+':'+port);
+
+                    var socket = io.connect('http://'+newDevice.privateIp+':'+port, {
+                        reconnection: false
+                    });
+
+                    //var socket = client('http://'+newDevice.privateIp+':'+port);
 
                     var action = actions.ask(device.id, settings.get('name'), newDevice, filename, []);
                     socket.on('connect', function () {
@@ -64,11 +81,16 @@ function setupMenu (devices) {
 
                     socket.on('ok', function () {
                         action.state = 'enabled';
+                        socket.emit('lets-go');
                     });
 
                     socket.on('ko', function () {
                         action.state = 'disabled';
                     });
+
+                    socket.on('disconnect', function () {
+                        console.log('disconnection');
+                    })
                 }}));
                 devicesAdded++;
             }
@@ -100,9 +122,7 @@ function setupMenu (devices) {
 }
 
 function setupIcon () {
-    var image = nativeImage.createFromPath(path.join(__dirname, '../ui/img/nexus-ubuntu.png'));
-
-    trayIcon = new Tray(image);
+    trayIcon = new Tray(icon);
     trayIcon.setToolTip('Nexus App');
 }
 
@@ -225,38 +245,10 @@ app.on('ready', function () {
         }
     });
 
-
-    //var image = NativeImage.createFromPath();
-
-    //var menu = new Menu();
-
-    //appIcon.setContextMenu(menu);
-    /*
-    var windowOptions = {
-        width: 880,
-        height: 400,
-        resizable: true,
-        //fullscreen: true,
-        //alwaysOnTop: true,
-        titleBarStyle: 'hidden',
-        title: app.getName()
-    };
-
-
-    var mainWindow = null;
-    mainWindow = new BrowserWindow(windowOptions);
-    //mainWindow.loadURL('http://localhost:8080');
-    mainWindow.loadURL(path.join('file://', folders.renderer, 'index.html'));
-    mainWindow.webContents.openDevTools();
-    //mainWindow.show();
-    */
-
-
-
 });
 
 app.on('window-all-closed', function () {
-//     app.quit();
+    //     app.quit();
 });
 
 express.get('/access/:link', function (req, res, next) {
@@ -264,7 +256,7 @@ express.get('/access/:link', function (req, res, next) {
     var target = null;
 
     actions.actions().forEach(function (action) {
-        if (action.description.meta.link == link && action.state == 'enabled') {
+        if (action.description.meta.link == link && action.enabled == 'enabled') {
             target = file;
         }
     });
@@ -280,7 +272,34 @@ express.get('/access/:link', function (req, res, next) {
 server.listen(port);
 
 io.on('connection', function (socket) {
-  socket.on('ask', function (action) {
-    console.log(action);
-  });
+    console.log([socket.handshake.address, socket.request.connection.remoteAddress, socket.client.request.headers['x-forwarded-for'], socket.handshake.headers['x-real-ip']]);
+
+    socket.on('ask', function (action) {
+        var deviceSrc = findDevice(action.origin.id);
+        var question = '';
+        var detail = '';
+
+        if (null != deviceSrc) {
+            switch (action.id) {
+                case 'file-transfer':
+                    var filename = path.basename(action.meta.link);
+                    var size = action.meta.size;
+                    question= deviceSrc.name+' wants to send to you the file "'+filename+'". Do you accept the transfer ?';
+                    detail= 'The file will be downloaded in the folder Desktop';
+            }
+            console.log(action);
+            var response = dialog.showMessageBox({
+                type: 'question',
+                icon: icon,
+                buttons: ['Yes please', 'No thanks you'],
+                title: 'Nexus',
+                message: question,
+                detail: detail
+            });
+            console.log(response);
+            socket.disconnect();
+        }
+
+
+    });
 });
