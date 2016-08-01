@@ -22,11 +22,35 @@ app.controller('SetupCtrl', function($scope, $timeout, $location){
         $scope.$apply();
     });
 
+    ipcRenderer.on('explain-icon', function (event, icon) {
+        $scope.loading = false;
+        $scope.state = 'explain-icon';
+        $scope.iconFilename = icon.filename;
+        $scope.iconPosition = icon.position;
+        $scope.$apply();
+    });
+
+    ipcRenderer.on('explain-folder', function () {
+        $scope.state = 'explain-folder';
+        $scope.$apply();
+    });
+
+
     $scope.ok = function () {
-        if ($scope.deviceName.length >= 5) {
+        if ($scope.state == 'registering' && $scope.deviceName.length >= 5) {
             ipcRenderer.send('setup-done', $scope.deviceName);
             //$location.path('/registering');
+        } else if ($scope.state == 'explain-icon') {
+            $scope.state = 'explain-folder';
+        } else if ($scope.state == 'explain-folder') {
+            $scope.state = 'finished';
+        } else if ($scope.state == 'finished') {
+            ipcRenderer.send('ready-to-start');
         }
+    };
+
+    $scope.openFolder = function () {
+        ipcRenderer.send('open-folder');
     };
 
 

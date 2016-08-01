@@ -4,17 +4,47 @@
 
     <div class="setup-form">
         <form class="ui form">
-            <div class="field" ng-hide="loading">
+            <div class="field" ng-show ="state == 'registering' && !loading">
                 <input type="text" name="name" ng-model="deviceName" placeholder="The name of your device">
             </div>
-            <p ng-hide="loading">
+            <p ng-show=" state == 'registering' && !loading">
                 Use a pretty good name, it will identify your computer on the network and everbody will see it ;).
             </p>
+            <p ng-show="deviceName.length < 5" ng-show="state == 'registering' && !loading">One more thing, choose a name of at least 5 characters.</p>
+            <img class="setup-explain-icon" ng-show="state == 'explain-icon'" src="img/{{iconFilename}}">
+            <p ng-show="state == 'explain-icon'">
+                Everything begins with this little pretty icon in the {{iconPosition}} of the screen.
+            </p>
+            <div class="setup-explain-folder-icon" ng-click="openFolder()" ng-show="state == 'explain-folder'">
+                <i class="ui icon huge folder"></i><br>
+                Nexus
+            </div>
+            <p ng-show="state == 'explain-folder'">
+                We have created a directory named "Nexus" for you on the desktop. The files will be downloaded there.
+            </p>
 
+            <p ng-show="state == 'finished'">
+                You are now ready to use the powerful application <strong>Nexus</strong> to easily interact with the others devices of your local network.
+            </p>
 
-            <p ng-show="deviceName.length < 5" ng-hide="loading">One more thing, choose a name of at least 5 characters.</p>
-            <div class="setup-submit-content" ng-hide="loading">
-                <button class="ui button setup-submit" type="submit" ng-class="{'disabled':deviceName.length < 5}"  ng-click="ok()">This name is the chosen one</button>
+            <p ng-show="state == 'finished'">Enjoy ;)</p>
+
+            <div class="setup-submit-content" ng-show="(state == 'registering' && !loading) || state == 'explain-icon' || state == 'explain-folder || state == 'finished'">
+                <button class="ui button setup-submit" type="submit" ng-class="{'disabled':deviceName.length < 5}"  ng-click="ok()">
+                    <span ng-show="state == 'registering' && !loading">
+                        This name is the chosen one
+                    </span>
+                    <span ng-show="state == 'explain-icon'">
+                        I get it
+                    </span>
+                    <span ng-show="state == 'explain-folder'">
+                        Ok I understand
+                    </span>
+                    <span ng-show="state == 'finished'">
+                        Let's go !
+                    </span>
+                </button>
+
             </div>
             <div class="ui active inverted loader big" ng-show="loading && state != 'detection-done'"></div>
             <p class="setup-loading" ng-show="loading && state == 'registering'">
@@ -23,8 +53,8 @@
             <p class="setup-loading" ng-show="loading && state == 'detecting'">
                 Detecting devices
             </p>
-            <p class="setup-loading" ng-show="loading && state == 'detection-done'">
-            </p>
+            <!-- <p class="setup-loading" ng-show="loading && state == 'detection-done'">
+            </p> -->
         </form>
     </div>
 

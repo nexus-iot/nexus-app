@@ -5,9 +5,9 @@ const ipc = electron.ipcMain;
 const Tray = electron.Tray;
 const Menu = electron.Menu;
 const MenuItem = electron.MenuItem;
-const nativeImage = electron.nativeImage;
 const ipcMain = electron.ipcMain;
-const dialog = require('electron').dialog;
+const dialog = electron.dialog;
+const shell = electron.shell;
 
 var device = require('nexus.io').device;
 var express = require('express')();
@@ -21,8 +21,8 @@ const path = require('path');
 var fs = require('fs-extra');
 var settings = require('./settings');
 var actions = require('./actions');
+var icon = require('./icon');
 
-var icon = nativeImage.createFromPath(path.join(__dirname, '../ui/img/nexus-ubuntu.png'));
 var apiKey = "880eaa008f725db601350115c2b7943d6b94fc2dfb9fe70b5440fe6be4abc116";
 var isRegistered = false;
 var menu = new Menu();
@@ -31,6 +31,8 @@ var trayIcon = null;
 var sender = null;
 var setupWindow = null;
 var preferencesWindow = null;
+
+var downloadDirname = '/home/thibault/Bureau/Nexus';
 
 var port = 8888;
 
@@ -120,7 +122,7 @@ function setupMenu (devices) {
 }
 
 function setupIcon () {
-    trayIcon = new Tray(icon);
+    trayIcon = new Tray(icon.icon);
     trayIcon.setToolTip('Nexus App');
 }
 
@@ -170,16 +172,20 @@ device.on('devices', function (newDevices) {
     console.log(newDevices);
     devices = newDevices;
     if (sender) {
-        sender.send('detection-done');
+        console.log({filename:icon.basename, position:icon.position});
+        sender.send('explain-icon', {filename:icon.basename, position:icon.position});
     }
-    setupMenu(devices);
+
     if (setupWindow) {
+        setupIcon();
+
+        /*
         setTimeout(function () {
             setupWindow.close();
-        }, 2000);
-        setupIcon();
-        setupMenu(devices);
+        }, 2000);*/
     }
+    setupMenu(devices);
+
 })
 
 device.on('device-joined', function (newDevice) {
@@ -212,16 +218,17 @@ app.on('ready', function () {
             setupWindow = new BrowserWindow({
                 width: 400,
                 height: 500,
-                resizable: false,
+                //resizable: false,
                 //fullscreen: true,
                 //alwaysOnTop: true,
-                skipTaskbar: true,
+                //skipTaskbar: true,
                 //kiosk: true,
-                autoHideMenuBar: true,
+                //autoHideMenuBar: true,
                 titleBarStyle: 'hidden',
                 title: app.getName()
             });
             setupWindow.setMenu(null);
+            // setupWindow.showDevTools();
             setupWindow.loadURL(path.join('file://',  __dirname, '../ui/index.html')+'#/setup');
             setupWindow.show();
 
@@ -230,16 +237,27 @@ app.on('ready', function () {
                 settings.set('name', deviceName);
                 settings.set('id', device.id);
                 settings.save();
+                fs.ensureDir(downloadDirname);
                 //console.log(arg)  // prints "ping"
                 sender = event.sender;
                 event.sender.send('registering');
                 register();
+            });
+
+            ipcMain.on('ready-to-start', function () {
+                setupWindow.close();
+            });
+
+            ipcMain.on('open-folder', function () {
+                console.log('openFolder');
+                shell.showItemInFolder(downloadDirname);
             });
             //console.log(err);
         } else {
             setupIcon();
             setupMenu(devices);
             register();
+            fs.ensureDir(downloadDirname);
         }
     });
 
