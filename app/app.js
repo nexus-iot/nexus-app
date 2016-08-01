@@ -107,7 +107,8 @@ function openPreferences () {
         titleBarStyle: 'hidden',
         title: app.getName()
     });
-    preferencesWindow.loadURL(path.join('file://', __dirname, '../ui/index.html#/preferences'));
+    preferencesWindow.setMenu(null);
+    preferencesWindow.loadURL(path.join('file://', __dirname, '../ui/index.html')+'#/preferences');
     preferencesWindow.show();
 }
 
@@ -183,14 +184,18 @@ app.on('ready', function () {
         if (err) {
             setupWindow = new BrowserWindow({
                 width: 400,
-                height: 400,
+                height: 500,
                 resizable: false,
                 //fullscreen: true,
                 //alwaysOnTop: true,
+                skipTaskbar: true,
+                //kiosk: true,
+                autoHideMenuBar: true,
                 titleBarStyle: 'hidden',
                 title: app.getName()
             });
-            setupWindow.loadURL(path.join('file://',  __dirname, '../ui/index.html#/setup'));
+            setupWindow.setMenu(null);
+            setupWindow.loadURL(path.join('file://',  __dirname, '../ui/index.html')+'#/setup');
             setupWindow.show();
 
             ipcMain.on('setup-done', function (event, deviceName) {
