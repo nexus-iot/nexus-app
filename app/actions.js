@@ -6,6 +6,7 @@ var clipboard = require('electron').clipboard;
 var actions = [];
 
 function generateLink (filename) {
+    console.log(filename);
     var hash = randomstring.generate(256);
     var link = hash+'/'+path.basename(filename);
     var file = {
