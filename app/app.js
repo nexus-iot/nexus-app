@@ -56,7 +56,7 @@ function setupMenu (devices) {
                 menu.append(new MenuItem({label:newDevice.name, type:'normal', click: function () {
 
                     var filenames = dialog.showOpenDialog({properties: ['openFile']});
-                    if (filenames.length == 0) {
+                    if (!filenames || filenames.length == 0) {
                         return;
                     }
                     console.log(filenames[0]);
