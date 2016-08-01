@@ -13,7 +13,7 @@ var device = require('nexus.io').device;
 var express = require('express')();
 var server = require('http').Server(express);
 var io = require('socket.io')(server);
-//var client = require('socket.io-client');
+var client = require('socket.io-client');
 
 
 //const clipboard = electron.clipboard;
@@ -60,11 +60,9 @@ function setupMenu (devices) {
                     console.log(filenames[0]);
                     var filename = filenames[0];
 
-                    var socket = io.connect('http://'+newDevice.privateIp+':'+port, {
+                    var socket = client('http://'+newDevice.privateIp+':'+port, {
                         reconnection: false
                     });
-
-                    //var socket = client('http://'+newDevice.privateIp+':'+port);
 
                     var action = actions.ask(device.id, settings.get('name'), newDevice, filename, []);
                     socket.on('connect', function () {
