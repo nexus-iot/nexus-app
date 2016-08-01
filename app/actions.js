@@ -1,5 +1,6 @@
 var randomstring = require('randomstring');
 var path = require('path');
+var fs = require('fs');
 var clipboard = require('electron').clipboard;
 
 
