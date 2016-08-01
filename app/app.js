@@ -107,7 +107,7 @@ function openPreferences () {
         titleBarStyle: 'hidden',
         title: app.getName()
     });
-    preferencesWindow.loadURL(path.join('file://', __dirname+'/../ui/index.html#/preferences'));
+    preferencesWindow.loadURL(path.join('file://', __dirname, '../ui/index.html#/preferences'));
     preferencesWindow.show();
 }
 
@@ -190,7 +190,7 @@ app.on('ready', function () {
                 titleBarStyle: 'hidden',
                 title: app.getName()
             });
-            setupWindow.loadURL(path.join('file://', __dirname+'/../ui/index.html#/setup'));
+            setupWindow.loadURL(path.join('file://',  __dirname, '../ui/index.html#/setup'));
             setupWindow.show();
 
             ipcMain.on('setup-done', function (event, deviceName) {
