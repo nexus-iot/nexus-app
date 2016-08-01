@@ -18,6 +18,7 @@ gulp.task('watch-electron', function () {
 
 gulp.task('init', function () {
     fs.ensureDirSync(__dirname+'/tmp');
+    gulp.start('less');
 });
 
 gulp.task('watch-less', function() {
