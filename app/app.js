@@ -281,10 +281,14 @@ express.get('/access/:link', function (req, res, next) {
 
     if (target) {
         res.sendFile(action.meta.path);
+        return;
     } else {
         res.sendStatut(403);
+        return;
     }
 
+}).get('*', function (req, res) {
+    res.send('ok');
 });
 
 server.listen(port);
@@ -302,13 +306,15 @@ io.on('connection', function (socket) {
                 case 'transfer-file':
                     var filename = path.basename(action.meta.link);
                     var size = action.meta.size;
-                    question= deviceSrc.name+' wants to send to you the file "'+filename+'" of '+fileSize(size)+'. Do you accept the transfer ?';
+                    question= deviceSrc.name+' wants to send to you the file "'+filename+'". Do you accept the transfer ?';
                     detail= 'The file will be downloaded in the folder Desktop';
             }
             console.log(action);
+            console.log(question);
+            console.log(detail);
             var response = dialog.showMessageBox({
                 type: 'question',
-                icon: icon,
+                icon: icon.icon,
                 buttons: ['Yes please', 'No thanks you'],
                 title: 'Nexus',
                 message: question,
@@ -317,17 +323,21 @@ io.on('connection', function (socket) {
 
             if (response == 0) {
                 var filename = path.join(downloadDirname, path.basename(action.meta.link));
-                var url = deviceSrc.privateIp+':'+port+action.meta.link;
+                var url = 'http://'+deviceSrc.privateIp+':'+port+'/access/'+action.meta.link;
                 var file = fs.createWriteStream(filename);
 
                 var request = http.get(url, function(response) {
+                    console.log('begin download');
+
                     var stream = response.pipe(file);
+
                     stream.on('finish', function () {
-                        new Notification('Nexus', {
+                        console.log('finished');
+                        /*new Notification('Nexus', {
                             title: 'Nexus',
                             body: 'The file has been successfully downloaded',
                             icon: icon.filename
-                        });
+                        });*/
                     });
                 });
                 console.log(action.meta.link);

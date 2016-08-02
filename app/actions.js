@@ -52,6 +52,6 @@ function ask(currentId, currentName, targetDevice, filename, rules) {
 module.exports = {
     ask: ask,
     actions: function () {
-        return files;
+        return actions;
     }
 }
