@@ -327,7 +327,7 @@ io.on('connection', function (socket) {
                 socket.emit('ok');
 
                 socket.on('lets-go', function () {
-                    var filename = path.join(downloadDirname, path.basename(action.meta.link));
+                    var filename = path.join(downloadDirname, path.basename(action.meta.filename));
                     var url = 'http://'+deviceSrc.privateIp+':'+port+'/access/'+action.meta.link;
                     console.log(url);
                     var file = fs.createWriteStream(filename);
