@@ -23,7 +23,7 @@ var fs = require('fs-extra');
 var settings = require('./settings');
 var actions = require('./actions');
 var icon = require('./icon');
-var fileSize = require('file-size');
+var fileSize = require('./file-size');
 
 var apiKey = "880eaa008f725db601350115c2b7943d6b94fc2dfb9fe70b5440fe6be4abc116";
 var isRegistered = false;
