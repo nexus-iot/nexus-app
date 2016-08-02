@@ -14,85 +14,35 @@ var express = require('express')();
 var http = require('http');
 var server = http.Server(express);
 var io = require('socket.io')(server);
-var client = require('socket.io-client');
-
 
 //const clipboard = electron.clipboard;
-const path = require('path');
+var path = require('path');
 var fs = require('fs-extra');
 var settings = require('./settings');
 var actions = require('./actions');
 var icon = require('./icon');
 var fileSize = require('./file-size');
+var network = require('./network');
+var interact = require('./interact')(network, actions, settings);
 
-var apiKey = "880eaa008f725db601350115c2b7943d6b94fc2dfb9fe70b5440fe6be4abc116";
-var isRegistered = false;
 var menu = new Menu();
-var devices = [];
 var trayIcon = null;
 var sender = null;
 var setupWindow = null;
 var preferencesWindow = null;
 
 var downloadDirname = path.join(app.getPath('desktop'), 'Nexus');
-
-var port = 8888;
-
-function findDevice (id) {
-    var deviceFound = null;
-    devices.forEach(function (device) {
-        if (device.id == id) {
-            deviceFound = device;
-        }
-    });
-    return deviceFound;
-}
+fs.ensureDir(downloadDirname);
 
 function setupMenu (devices) {
     menu = new Menu();
 
-    if (isRegistered) {
+    if (network.currentDevice.isRegistered) {
         var devicesAdded = 0;
-        devices.forEach (function (newDevice) {
-            if (newDevice.id != device.id) {
-                menu.append(new MenuItem({label:newDevice.name, type:'normal', click: function () {
-
-                    var filenames = dialog.showOpenDialog({properties: ['openFile']});
-                    if (!filenames || filenames.length == 0) {
-                        return;
-                    }
-                    console.log(filenames[0]);
-                    var filename = filenames[0];
-
-                    var socket = client('http://'+newDevice.privateIp+':'+port, {
-                        reconnection: false
-                    });
-
-                    var action = actions.ask(device.id, settings.get('name'), newDevice, filename, []);
-                    socket.on('connect', function () {
-                        socket.emit('ask', action.description);
-                    });
-
-                    socket.on('connect_error', function (error) {
-                        console.log(error);
-                    });
-
-                    socket.on('connect_timeout', function () {
-                        console.log('timeout');
-                    })
-
-                    socket.on('ok', function () {
-                        action.state = 'enabled';
-                        socket.emit('lets-go');
-                    });
-
-                    socket.on('ko', function () {
-                        action.state = 'disabled';
-                    });
-
-                    socket.on('disconnect', function () {
-                        console.log('disconnection');
-                    });
+        devices.forEach (function (device) {
+            if (device.id != network.currentDevice.id) {
+                menu.append(new MenuItem({label:device.name, type:'normal', click: function () {
+                    interact.click(device);
                 }}));
                 devicesAdded++;
             }
@@ -143,130 +93,85 @@ function openPreferences () {
     preferencesWindow.show();
 }
 
-function register () {
-    device.register({
-        host: 'https://nexus-io.herokuapp.com',
-        //host: 'http://localhost:8080',
-        apiKey: apiKey,
-        name: settings.get('name'),
-        id: settings.get('id')
+function openSetup () {
+    setupWindow = new BrowserWindow({
+        width: 400,
+        height: 500,
+        //resizable: false,
+        //fullscreen: true,
+        //alwaysOnTop: true,
+        //skipTaskbar: true,
+        //kiosk: true,
+        //autoHideMenuBar: true,
+        titleBarStyle: 'hidden',
+        title: app.getName()
     });
+    setupWindow.setMenu(null);
+    // setupWindow.showDevTools();
+    setupWindow.loadURL(path.join('file://',  __dirname, '../ui/index.html')+'#/setup');
+    setupWindow.show();
 }
 
-device.on('registered', function (newDevice) {
-    isRegistered = true;
-    console.log('registered', newDevice);
-    if (sender) {
+// communication with setupWindow
+ipcMain.on('setup-done', function (event, deviceName) {
+    console.log('setup-done');
+    settings.set('name', deviceName);
+    settings.set('id', device.id);
+    settings.save();
+    fs.ensureDir(downloadDirname);
+    //console.log(arg)  // prints "ping"
+    sender = event.sender;
+    event.sender.send('registering');
+    network.register(settings);
+});
+
+ipcMain.on('ready-to-start', function () {
+    setupWindow.close();
+    setupWindow = null;
+});
+
+ipcMain.on('open-folder', function () {
+    console.log('openFolder');
+    shell.showItemInFolder(downloadDirname);
+});
+
+network.on('state-changed', function () {
+    if (setupWindow && !trayIcon) {
+        setupIcon();
+    }
+    setupMenu(network.devices);
+});
+
+network.currentDevice.on('registered', function () {
+    if (sender && setupWindow) {
+        // we send that detection is done
         sender.send('detecting');
     }
-    device.detect();
-    setupMenu(devices);
 });
 
-device.on('unregistered', function () {
-    isRegistered = false;
-    devices = [];
-    setupMenu(devices);
-});
-
-device.on('devices', function (newDevices) {
-    console.log('devices');
-    console.log(newDevices);
-    devices = newDevices;
-    if (sender) {
-        console.log({filename:icon.basename, position:icon.position});
+network.currentDevice.on('devices', function () {
+    if (sender && setupWindow) {
         sender.send('explain-icon', {filename:icon.basename, position:icon.position});
     }
-
-    if (setupWindow) {
-        setupIcon();
-
-        /*
-        setTimeout(function () {
-        setupWindow.close();
-    }, 2000);*/
-    }
-    setupMenu(devices);
-
-})
-
-device.on('device-joined', function (newDevice) {
-    console.log('device-joined');
-    console.log(newDevice);
-    devices.push(newDevice);
-    setupMenu(devices);
 });
-
-device.on('device-leaved', function (oldDevice) {
-    console.log('device-leaved');
-    console.log(oldDevice);
-    var index = 0;
-    for(var i = 0 ;  i < devices.length ; i++) {
-        if (oldDevice.id == devices[i].id) {
-            index = i;
-        }
-    }
-    devices.splice(index, 1);
-    setupMenu(devices);
-});
-
-var mainWindow = null;
 
 app.setName('Elqui');
 app.on('ready', function () {
-
     settings.load(function (err) {
         if (err) {
-            setupWindow = new BrowserWindow({
-                width: 400,
-                height: 500,
-                //resizable: false,
-                //fullscreen: true,
-                //alwaysOnTop: true,
-                //skipTaskbar: true,
-                //kiosk: true,
-                //autoHideMenuBar: true,
-                titleBarStyle: 'hidden',
-                title: app.getName()
-            });
-            setupWindow.setMenu(null);
-            // setupWindow.showDevTools();
-            setupWindow.loadURL(path.join('file://',  __dirname, '../ui/index.html')+'#/setup');
-            setupWindow.show();
-
-            ipcMain.on('setup-done', function (event, deviceName) {
-                console.log('setup-done');
-                settings.set('name', deviceName);
-                settings.set('id', device.id);
-                settings.save();
-                fs.ensureDir(downloadDirname);
-                //console.log(arg)  // prints "ping"
-                sender = event.sender;
-                event.sender.send('registering');
-                register();
-            });
-
-            ipcMain.on('ready-to-start', function () {
-                setupWindow.close();
-            });
-
-            ipcMain.on('open-folder', function () {
-                console.log('openFolder');
-                shell.showItemInFolder(downloadDirname);
-            });
             //console.log(err);
+            openSetup();
         } else {
             setupIcon();
-            setupMenu(devices);
-            register();
-            fs.ensureDir(downloadDirname);
+            setupMenu(network.devices);
+            network.register(settings);
         }
     });
 
 });
 
 app.on('window-all-closed', function () {
-    //     app.quit();
+        // app.quit();
 });
 
 express.get('/access/:link', function (req, res, next) {
@@ -275,9 +180,9 @@ express.get('/access/:link', function (req, res, next) {
     console.log(req.url);
 
     actions.actions().forEach(function (action) {
-        console.log(action.description.meta.link);
-        console.log(link);
-        console.log(action.state);
+        // console.log(action.description.meta.link);
+        // console.log(link);
+        // console.log(action.state);
         if (action.description.meta.link == link && action.state == 'enabled') {
             target = action;
         }
@@ -301,7 +206,7 @@ express.get('/access/:link', function (req, res, next) {
     res.send('ok');
 });
 
-server.listen(port);
+server.listen(network.port);
 
 io.on('connection', function (socket) {
     console.log([socket.handshake.address, socket.request.connection.remoteAddress, socket.client.request.headers['x-forwarded-for'], socket.handshake.headers['x-real-ip']]);
