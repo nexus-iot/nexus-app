@@ -285,7 +285,7 @@ express.get('/access/:link', function (req, res, next) {
         res.sendFile(action.meta.path);
         return;
     } else {
-        res.sendStatut(403);
+        res.sendStatus(403);
         return;
     }
 
