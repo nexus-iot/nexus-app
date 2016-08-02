@@ -92,7 +92,7 @@ function setupMenu (devices) {
 
                     socket.on('disconnect', function () {
                         console.log('disconnection');
-                    })
+                    });
                 }}));
                 devicesAdded++;
             }
@@ -185,8 +185,8 @@ device.on('devices', function (newDevices) {
         setTimeout(function () {
         setupWindow.close();
     }, 2000);*/
-}
-setupMenu(devices);
+    }
+    setupMenu(devices);
 
 })
 
@@ -322,44 +322,44 @@ io.on('connection', function (socket) {
             console.log(action);
             console.log(question);
             console.log(detail);
-            var response = dialog.showMessageBox({
+            dialog.showMessageBox({
                 type: 'question',
                 icon: icon.icon,
                 buttons: ['Yes please', 'No thanks you'],
                 title: 'Nexus',
                 message: question,
                 detail: detail
-            });
+            }, function (response) {
+                if (response == 0) {
+                    socket.emit('ok');
 
-            if (response == 0) {
-                socket.emit('ok');
+                    socket.on('lets-go', function () {
+                        var filename = path.join(downloadDirname, path.basename(action.meta.link));
+                        var url = 'http://'+deviceSrc.privateIp+':'+port+'/access/'+action.meta.link;
+                        console.log(url);
+                        var file = fs.createWriteStream(filename);
 
-                socket.on('lets-go', function () {
-                    var filename = path.join(downloadDirname, path.basename(action.meta.link));
-                    var url = 'http://'+deviceSrc.privateIp+':'+port+'/access/'+action.meta.link;
-                    console.log(url);
-                    var file = fs.createWriteStream(filename);
+                        var request = http.get(url, function(response) {
+                            console.log('begin download');
 
-                    var request = http.get(url, function(response) {
-                        console.log('begin download');
+                            var stream = response.pipe(file);
 
-                        var stream = response.pipe(file);
-
-                        stream.on('finish', function () {
-                            console.log('finished');
-                            socket.disconnect();
-                            /*new Notification('Nexus', {
-                            title: 'Nexus',
-                            body: 'The file has been successfully downloaded',
-                            icon: icon.filename
-                        });*/
+                            stream.on('finish', function () {
+                                console.log('finished');
+                                socket.disconnect();
+                                /*new Notification('Nexus', {
+                                title: 'Nexus',
+                                body: 'The file has been successfully downloaded',
+                                icon: icon.filename
+                            });*/
+                            });
+                        });
                     });
-                });
+                } else {
+                    socket.emit('ko');
+                    socket.disconnect();
+                }
             });
-        } else {
-            socket.emit('ko');
-            socket.disconnect();
         }
-    }
-});
+    });
 });
