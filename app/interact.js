@@ -6,7 +6,7 @@ var network = null;
 var actions = null;
 var settings = null;
 
-function propose(device) {
+function transferFile(device) {
     var filenames = dialog.showOpenDialog({properties: ['openFile']});
     if (!filenames || filenames.length == 0) {
         return;
@@ -52,6 +52,6 @@ module.exports = function (newNetwork, newActions, newSettings) {
     settings = newSettings;
 
     return {
-        propose: propose
+        transferFile: transferFile
     };
 }

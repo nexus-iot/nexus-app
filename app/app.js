@@ -42,7 +42,7 @@ function setupMenu (devices) {
         devices.forEach (function (device) {
             if (device.id != network.currentDevice.id) {
                 menu.append(new MenuItem({label:device.name, type:'normal', click: function () {
-                    interact.click(device);
+                    interact.transferFile(device);
                 }}));
                 devicesAdded++;
             }
