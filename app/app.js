@@ -212,7 +212,7 @@ io.on('connection', function (socket) {
     console.log([socket.handshake.address, socket.request.connection.remoteAddress, socket.client.request.headers['x-forwarded-for'], socket.handshake.headers['x-real-ip']]);
 
     socket.on('ask', function (action) {
-        var deviceSrc = findDevice(action.origin.id);
+        var deviceSrc = network.findDevice(action.origin.id);
         var question = '';
         var detail = '';
 
