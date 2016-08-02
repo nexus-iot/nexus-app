@@ -240,7 +240,7 @@ io.on('connection', function (socket) {
 
                     socket.on('lets-go', function () {
                         var filename = path.join(downloadDirname, path.basename(action.meta.filename));
-                        var url = 'http://'+deviceSrc.privateIp+':'+port+'/access/'+action.meta.link;
+                        var url = 'http://'+deviceSrc.privateIp+':'+network.port+'/access/'+action.meta.link;
                         console.log(url);
                         var file = fs.createWriteStream(filename);
                         var request = http.get(url, function(response) {
