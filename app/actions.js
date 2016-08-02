@@ -9,7 +9,7 @@ var actions = [];
 function generateLink (filename) {
     console.log(filename);
     var hash = randomstring.generate(64);
-    var link = hash+'/'+path.basename(filename);
+    var link = hash ; //+'/'+path.basename(filename);
     var file = {
         link: link,
         path: filename
@@ -34,6 +34,7 @@ function ask(currentId, currentName, targetDevice, filename, rules) {
             },
             id: 'transfer-file',
             meta: {
+                filename: path.basename(filename),
                 link: link,
                 size: fileSizeInBytes
             }

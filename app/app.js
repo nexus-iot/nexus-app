@@ -306,7 +306,7 @@ io.on('connection', function (socket) {
         if (null != deviceSrc) {
             switch (action.id) {
                 case 'transfer-file':
-                    var filename = path.basename(action.meta.link);
+                    var filename = action.meta.filename;
                     var size = action.meta.size;
                     question= deviceSrc.name+' wants to send to you the file "'+filename+'". Do you accept the transfer ?';
                     detail= 'The file will be downloaded in the folder Desktop';
