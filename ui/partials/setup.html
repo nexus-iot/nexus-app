@@ -30,19 +30,19 @@
             <p ng-show="state == 'finished'">Enjoy ;)</p>
 
             <div class="setup-submit-content" ng-show="(state == 'registering' && !loading) || state == 'explain-icon' || state == 'explain-folder || state == 'finished'">
-                <button class="ui button setup-submit" type="submit" ng-class="{'disabled':deviceName.length < 5}"  ng-click="ok()">
-                    <span ng-show="state == 'registering' && !loading">
+
+
+                <button class="ui button setup-submit" ng-show="(state == 'registering' && !loading)" type="submit" ng-class="{'disabled':deviceName.length < 5}"  ng-click="ok()">
                         This name is the chosen one
-                    </span>
-                    <span ng-show="state == 'explain-icon'">
+                </button>
+                <button class="ui button setup-submit" ng-show="state == 'explain-icon'" type="submit" ng-click="ok()">
                         I get it
-                    </span>
-                    <span ng-show="state == 'explain-folder'">
+                </button>
+                <button class="ui button setup-submit" ng-show="state == 'explain-folder'" type="submit" ng-click="ok()">
                         Ok I understand
-                    </span>
-                    <span ng-show="state == 'finished'">
+                </button>
+                <button class="ui button setup-submit" ng-show="state == 'finished'" type="submit" ng-click="ok()">
                         Let's go !
-                    </span>
                 </button>
 
             </div>

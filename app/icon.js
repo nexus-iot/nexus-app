@@ -28,13 +28,15 @@ switch (os.platform()) {
 }
 
 var basename = 'nexus'+(osIcon!=''?'-':'')+osIcon+'.png';
+var dirname = '../ui/img/';
+var filename = path.join(__dirname, dirname,  basename);
 
 var whiteBasename = 'nexus-white.png';
 
-var dirname = '../ui/img/';
 
 module.exports = {
     basename: basename,
-    icon: nativeImage.createFromPath(path.join(__dirname, dirname,  basename)),
+    icon: nativeImage.createFromPath(filename),
+    filename: filename,
     position: relativePosition
 };

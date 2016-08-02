@@ -11,7 +11,8 @@ const shell = electron.shell;
 
 var device = require('nexus.io').device;
 var express = require('express')();
-var server = require('http').Server(express);
+var http = require('http');
+var server = http.Server(express);
 var io = require('socket.io')(server);
 var client = require('socket.io-client');
 
@@ -22,6 +23,7 @@ var fs = require('fs-extra');
 var settings = require('./settings');
 var actions = require('./actions');
 var icon = require('./icon');
+var fileSize = require('file-size');
 
 var apiKey = "880eaa008f725db601350115c2b7943d6b94fc2dfb9fe70b5440fe6be4abc116";
 var isRegistered = false;
@@ -32,7 +34,7 @@ var sender = null;
 var setupWindow = null;
 var preferencesWindow = null;
 
-var downloadDirname = '/home/thibault/Bureau/Nexus';
+var downloadDirname = path.join(app.getPath('desktop'), 'Nexus');
 
 var port = 8888;
 
@@ -300,7 +302,7 @@ io.on('connection', function (socket) {
                 case 'transfer-file':
                     var filename = path.basename(action.meta.link);
                     var size = action.meta.size;
-                    question= deviceSrc.name+' wants to send to you the file "'+filename+'". Do you accept the transfer ?';
+                    question= deviceSrc.name+' wants to send to you the file "'+filename+'" of '+fileSize(size)+'. Do you accept the transfer ?';
                     detail= 'The file will be downloaded in the folder Desktop';
             }
             console.log(action);
@@ -312,10 +314,26 @@ io.on('connection', function (socket) {
                 message: question,
                 detail: detail
             });
-            console.log(response);
-            socket.disconnect();
+
+            if (response == 0) {
+                var filename = path.join(downloadDirname, path.basename(action.meta.link));
+                var url = deviceSrc.privateIp+':'+port+action.meta.link;
+                var file = fs.createWriteStream(filename);
+
+                var request = http.get(url, function(response) {
+                    var stream = response.pipe(file);
+                    stream.on('finish', function () {
+                        new Notification('Nexus', {
+                            title: 'Nexus',
+                            body: 'The file has been successfully downloaded',
+                            icon: icon.filename
+                        });
+                    });
+                });
+                console.log(action.meta.link);
+            } else {
+                socket.disconnect();
+            }
         }
-
-
     });
 });
