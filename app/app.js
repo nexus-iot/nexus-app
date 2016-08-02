@@ -272,8 +272,10 @@ app.on('window-all-closed', function () {
 express.get('/access/:link', function (req, res, next) {
     var link = req.params.link;
     var target = null;
+    console.log(req.url);
 
     actions.actions().forEach(function (action) {
+        console.log(action.description.meta.link);
         if (action.description.meta.link == link && action.enabled == 'enabled') {
             target = file;
         }
@@ -322,26 +324,32 @@ io.on('connection', function (socket) {
             });
 
             if (response == 0) {
-                var filename = path.join(downloadDirname, path.basename(action.meta.link));
-                var url = 'http://'+deviceSrc.privateIp+':'+port+'/access/'+action.meta.link;
-                var file = fs.createWriteStream(filename);
+                socket.emit('ok');
 
-                var request = http.get(url, function(response) {
-                    console.log('begin download');
+                socket.on('lets-go', function () {
+                    var filename = path.join(downloadDirname, path.basename(action.meta.link));
+                    var url = 'http://'+deviceSrc.privateIp+':'+port+'/access/'+action.meta.link;
+                    console.log(url);
+                    var file = fs.createWriteStream(filename);
 
-                    var stream = response.pipe(file);
+                    var request = http.get(url, function(response) {
+                        console.log('begin download');
 
-                    stream.on('finish', function () {
-                        console.log('finished');
-                        /*new Notification('Nexus', {
-                            title: 'Nexus',
-                            body: 'The file has been successfully downloaded',
-                            icon: icon.filename
-                        });*/
+                        var stream = response.pipe(file);
+
+                        stream.on('finish', function () {
+                            console.log('finished');
+                            socket.disconnect();
+                            /*new Notification('Nexus', {
+                                title: 'Nexus',
+                                body: 'The file has been successfully downloaded',
+                                icon: icon.filename
+                            });*/
+                        });
                     });
                 });
-                console.log(action.meta.link);
             } else {
+                socket.emit('ko');
                 socket.disconnect();
             }
         }
