@@ -50,8 +50,8 @@ function setupMenu (devices) {
                     var submenu = new Menu();
 
                     console.log(device.services);
-                    if (device.services && devices.services.length > 0) {
-                        devices.services.forEach(function (service) {
+                    if (device.services && device.services.length > 0) {
+                        device.services.forEach(function (service) {
                             submenu.append(new MenuItem({label: service.id, type:'normal'}));
                         });
                     } else {
