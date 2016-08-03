@@ -46,9 +46,21 @@ function setupMenu (devices) {
             if (device.id != network.currentDevice.id) {
 
                 if (device.accessible) {
-                    menu.append(new MenuItem({label:device.name, type:'normal', click: function () {
-                        interact.transferFile(device);
-                    }}));
+
+                    var submenu = new Menu();
+
+                    if (device.services && devices.services.length > 0) {
+                        devices.services.forEach(function (service) {
+                            submenu.append(new MenuItem({label: service.id, type:'normal'}));
+                        });
+                    } else {
+                        submenu.append(new MenuItem({label: 'No services', type:'normal', enabled: false}));
+                    }
+                    menu.append(new MenuItem({label:device.name, type:'submenu', submenu:submenu}));
+
+                    // function () {
+                    //    interact.transferFile(device);
+                    //}}));
                 } else {
                     menu.append(new MenuItem({label:device.name, type:'normal', enabled: false}));
                 }
@@ -251,7 +263,7 @@ io.on('connection', function (socket) {
     var device = null
 
     socket.on('detect-services', function () {
-        socket.emit('services', [{id:'file-transfer'}]);
+        socket.emit('services', {type:'laptop', services:[{id:'file-transfer'}]});
     });
 
     socket.on('ask', function (newAction) {

@@ -39,6 +39,12 @@ function Network () {
         console.log(newDevices);
         Network.devices = newDevices;
         Network.emit('state-changed');
+
+        newDevices.forEach(function (newDevice) {
+            Network.detectServices(newDevice, function () {
+                Network.emit('state-changed');
+            });
+        });
     });
 
     this.currentDevice.on('device-joined', function (newDevice) {
@@ -90,6 +96,8 @@ function Network () {
     };
 
     this.detectServices = function (targetDevice, callback) {
+        //console.log('detectServices');
+
         var socket = client(Network.getHttpUrl(targetDevice), {
             reconnection: false
         });
@@ -111,7 +119,8 @@ function Network () {
         });
 
         socket.on('services', function (services) {
-            targetDevice.services = services;
+            targetDevice.type = services.type;
+            targetDevice.services = services.services;
             socket.disconnect();
             callback && callback();
         });
