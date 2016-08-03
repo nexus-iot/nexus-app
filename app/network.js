@@ -90,7 +90,7 @@ function Network () {
     };
 
     this.detectServices = function (targetDevice, callback) {
-        var socket = client(getHttpUrl(targetDevice), {
+        var socket = client(Network.getHttpUrl(targetDevice), {
             reconnection: false
         });
 
