@@ -28,9 +28,11 @@ var notify = require('./notifications');
 
 var menu = new Menu();
 var trayIcon = null;
-var sender = null;
+var setupSender = null;
+var preferencesSender = null;
 var setupWindow = null;
 var preferencesWindow = null;
+
 
 var downloadDirname = path.join(app.getPath('desktop'), 'Nexus');
 fs.ensureDir(downloadDirname);
@@ -60,6 +62,10 @@ function setupMenu (devices) {
     // }}));
 
     menu.append(new MenuItem({type:'separator'}));
+    menu.append(new MenuItem({label: 'Open Nexus Folder', type:'normal', click: function () {
+        shell.openItem(downloadDirname);
+    }}));
+    menu.append(new MenuItem({type:'separator'}));
     menu.append(new MenuItem({label: 'Preferences', type:'normal', click: function () {
         openPreferences();
     }}));
@@ -81,24 +87,25 @@ function setupIcon () {
 
 function openPreferences () {
     preferencesWindow = new BrowserWindow({
-        width: 1000,
-        height: 600,
-        resizable: false,
+        width: 500,
+        height: 200,
+        //resizable: false,
         //fullscreen: true,
         //alwaysOnTop: true,
-        titleBarStyle: 'hidden',
+        //titleBarStyle: 'hidden',
         title: app.getName()
     });
-    preferencesWindow.setMenu(null);
+    //preferencesWindow.setMenu(null);
     preferencesWindow.loadURL(path.join('file://', __dirname, '../ui/index.html')+'#/preferences');
     preferencesWindow.show();
+
 }
 
 function openSetup () {
     setupWindow = new BrowserWindow({
         width: 400,
         height: 500,
-        //resizable: false,
+        resizable: false,
         //fullscreen: true,
         //alwaysOnTop: true,
         //skipTaskbar: true,
@@ -113,15 +120,19 @@ function openSetup () {
     setupWindow.show();
 }
 
+function openDownloadFolder () {
+    shell.showItemInFolder(downloadDirname);
+}
+
 // communication with setupWindow
 ipcMain.on('setup-done', function (event, deviceName) {
-    console.log('setup-done');
+    //console.log('setup-done');
     settings.set('name', deviceName);
     settings.set('id', device.id);
     settings.save();
     fs.ensureDir(downloadDirname);
     //console.log(arg)  // prints "ping"
-    sender = event.sender;
+    setupSender = event.sender;
     event.sender.send('registering');
     network.register(settings);
 });
@@ -129,11 +140,32 @@ ipcMain.on('setup-done', function (event, deviceName) {
 ipcMain.on('ready-to-start', function () {
     setupWindow.close();
     setupWindow = null;
+    setupSender = null;
 });
 
 ipcMain.on('open-folder', function () {
-    console.log('openFolder');
-    shell.showItemInFolder(downloadDirname);
+    //console.log('openFolder');
+    openDownloadFolder();
+});
+
+ipcMain.on('preferences-ready', function (event) {
+    preferencesSender = event.sender;
+    preferencesSender.send('device-name', settings.get('name'));
+    console.log('preferences-ready');
+});
+
+ipcMain.on('preferences-close', function () {
+    preferencesWindow.close();
+    preferencesWindow = null;
+    preferencesSender = null;
+});
+
+ipcMain.on('preferences-save', function (event, deviceName) {
+    settings.set('name', deviceName);
+    settings.save();
+    preferencesWindow.close();
+    preferencesWindow = null;
+    preferencesSender = null;
 });
 
 network.on('state-changed', function () {
@@ -144,15 +176,15 @@ network.on('state-changed', function () {
 });
 
 network.currentDevice.on('registered', function () {
-    if (sender && setupWindow) {
+    if (setupWindow && setupSender) {
         // we send that detection is done
-        sender.send('detecting');
+        setupSender.send('detecting');
     }
 });
 
 network.currentDevice.on('devices', function () {
-    if (sender && setupWindow) {
-        sender.send('explain-icon', {filename:icon.basename, position:icon.position});
+    if (setupWindow && setupSender) {
+        setupSender.send('explain-icon', {filename:icon.basename, position:icon.position});
     }
 });
 

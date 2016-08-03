@@ -1,10 +1,18 @@
 <div class="preferences">
 
+    <form class="ui form large">
+      <div class="field">
+        <label>Your device name</label>
+        <input type="text" name="first-name" placeholder="Ex: Macbook of Thomas" ng-model="deviceName">
+        <div class="preferences-feedback">
+            <span ng-show="deviceName.length < 5">Please fill with a name of at least 5 characters.</span>
+        </div>
+      </div>
+    </form>
+    <!-- <div class="ui segment">
 
-    <div class="ui segment">
 
-
-    </div>
+    </div> -->
     <!--<div class="ui secondary blue inverted pointing menu">
         <a class="item">
             Identity
@@ -15,4 +23,13 @@
 
 
     </div>-->
+
+    <div class="preferences-buttons">
+        <button class="ui primary button large" ng-disabled="deviceName.length < 5" ng-click="save()">
+          Save
+        </button>
+        <button class="ui button large" ng-click="cancel()">
+          Discard
+        </button>
+    </div>
 </div>

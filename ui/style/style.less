@@ -4,6 +4,7 @@
 
 @grey: rgba(255,255,255,.5);
 @lightGrey: #aaaaaa;
+@warning: #ffa940;
 
 body, html {
     padding: 0;
@@ -85,4 +86,22 @@ body, html {
 .preferences {
     height: 100%;
     padding: 20px;
+
+
+    &-buttons {
+        padding: 20px;
+        text-align: right;
+        position: fixed;
+        right: 0;
+        bottom: 0;
+    }
+
+    &-feedback {
+        height: 50px;
+        font-weight: bold;
+        padding-top: 5px;
+        //padding-left: 10px;
+        font-style: italic;
+        color: @warning;
+    }
 }

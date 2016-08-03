@@ -1,32 +1,27 @@
 var ipcRenderer = require('electron').ipcRenderer;
 
 app.controller('PreferencesCtrl', function($scope, $timeout, $location){
+
     $scope.deviceName = '';
 
-    $scope.loading = false;
-    $scope.state = 'registering';
+    ipcRenderer.send('preferences-ready');
 
-    ipcRenderer.on('registering', function () {
-        $scope.loading = true;
-        console.log('registering'+$scope.loading);
-        $scope.$apply();
+    ipcRenderer.on('device-name', function (event, arg) {
+        console.log('ok');
+        $scope.deviceName = arg;
     });
 
-    ipcRenderer.on('detecting', function () {
-        $scope.state = 'detecting';
-        $scope.$apply();
-    });
+    $scope.save = function () {
+        ipcRenderer.send('preferences-save', $scope.deviceName);
 
-    ipcRenderer.on('detection-done', function () {
-        $scope.state = 'detection-done';
-        $scope.$apply();
-    });
+    };
+    // 
+    // $scope.$watch('deviceName', function (newValue, oldValue) {
+    //     console.log(newValue);
+    // });
 
-    $scope.ok = function () {
-        if ($scope.deviceName.length >= 5) {
-            ipcRenderer.send('setup-done', $scope.deviceName);
-            //$location.path('/registering');
-        }
+    $scope.cancel = function () {
+        ipcRenderer.send('preferences-close');
     };
 
 

@@ -32,7 +32,7 @@
             <div class="setup-submit-content" ng-show="(state == 'registering' && !loading) || state == 'explain-icon' || state == 'explain-folder || state == 'finished'">
 
 
-                <button class="ui button setup-submit" ng-show="(state == 'registering' && !loading)" type="submit" ng-class="{'disabled':deviceName.length < 5}"  ng-click="ok()">
+                <button class="ui button setup-submit" ng-show="(state == 'registering' && !loading)" type="submit" ng-disabled="deviceName.length < 5"  ng-click="ok()">
                         This name is the chosen one
                 </button>
                 <button class="ui button setup-submit" ng-show="state == 'explain-icon'" type="submit" ng-click="ok()">
