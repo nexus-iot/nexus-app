@@ -24,6 +24,7 @@ var icon = require('./icon');
 var fileSize = require('./file-size');
 var network = require('./network');
 var interact = require('./interact')(network, actions, settings);
+var notify = require('./notifications');
 
 var menu = new Menu();
 var trayIcon = null;
@@ -174,15 +175,11 @@ app.on('window-all-closed', function () {
         // app.quit();
 });
 
-express.get('/access/:link', function (req, res, next) {
+express
+.get('/access/:link', function (req, res, next) {
     var link = req.params.link;
     var target = null;
-    console.log(req.url);
-
     actions.actions().forEach(function (action) {
-        // console.log(action.description.meta.link);
-        // console.log(link);
-        // console.log(action.state);
         if (action.description.meta.link == link && action.state == 'enabled') {
             target = action;
         }
@@ -201,8 +198,8 @@ express.get('/access/:link', function (req, res, next) {
         res.sendStatus(403);
         return;
     }
-
-}).get('*', function (req, res) {
+})
+.get('*', function (req, res) {
     res.send('ok');
 });
 
@@ -211,59 +208,49 @@ server.listen(network.port);
 io.on('connection', function (socket) {
     console.log([socket.handshake.address, socket.request.connection.remoteAddress, socket.client.request.headers['x-forwarded-for'], socket.handshake.headers['x-real-ip']]);
 
-    socket.on('ask', function (action) {
-        var deviceSrc = network.findDevice(action.origin.id);
-        var question = '';
-        var detail = '';
+    var validated = false;
+    var action = null;
+    var device = null
 
-        if (null != deviceSrc) {
-            switch (action.id) {
-                case 'transfer-file':
-                var filename = action.meta.filename;
-                var size = action.meta.size;
-                question= deviceSrc.name+' wants to send to you the file "'+filename+'". Do you accept the transfer ?';
-                detail= 'The file will be downloaded in the folder Desktop';
-            }
-            console.log(action);
-            console.log(question);
-            console.log(detail);
-            dialog.showMessageBox({
-                type: 'question',
-                icon: icon.icon,
-                buttons: ['Yes please', 'No thanks you'],
-                title: 'Nexus',
-                message: question,
-                detail: detail
-            }, function (response) {
-                if (response == 0) {
-                    socket.emit('ok');
+    socket.on('ask', function (newAction) {
+        action = newAction;
+        interact.showDialog(icon.icon, action,
+            function (deviceSrc) {
+                validated = true;
+                device = deviceSrc;
+                socket.emit('ok');
+        }, function () {
+            socket.emit('ko');
+            socket.disconnect();
+        })
 
-                    socket.on('lets-go', function () {
-                        var filename = path.join(downloadDirname, path.basename(action.meta.filename));
-                        var url = 'http://'+deviceSrc.privateIp+':'+network.port+'/access/'+action.meta.link;
-                        console.log(url);
-                        var file = fs.createWriteStream(filename);
-                        var request = http.get(url, function(response) {
-                            console.log('begin download');
+    });
 
-                            var stream = response.pipe(file);
 
-                            stream.on('finish', function () {
-                                console.log('finished');
-                                socket.disconnect();
-                                /*new Notification('Nexus', {
-                                title: 'Nexus',
-                                body: 'The file has been successfully downloaded',
-                                icon: icon.filename
-                            });*/
-                            });
-                        });
-                    });
-                } else {
-                    socket.emit('ko');
-                    socket.disconnect();
-                }
-            });
+    socket.on('lets-go', function () {
+        if (!validated && action && action) {
+            return;
         }
+        var basename = path.basename(action.meta.filename);
+        var filename = path.join(downloadDirname, basename);
+        var url = 'http://'+device.privateIp+':'+network.port+'/access/'+action.meta.link;
+        console.log(url);
+        var file = fs.createWriteStream(filename);
+        var request = http.get(url, function(response) {
+            console.log('begin download');
+
+            var stream = response.pipe(file);
+
+            stream.on('finish', function () {
+                console.log('finished');
+                socket.disconnect();
+                notify('Nexus', 'The file "'+basename+'" has been successfully downloaded.')
+                /*new Notification('Nexus', {
+                title: 'Nexus',
+                body: 'The file has been successfully downloaded',
+                icon: icon.filename
+            });*/
+            });
+        });
     });
 });
