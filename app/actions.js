@@ -32,7 +32,7 @@ function ask(currentId, currentName, targetDevice, filename, rules) {
                 id: currentId,
                 name: currentName,
             },
-            id: 'transfer-file',
+            id: 'file-transfer',
             meta: {
                 filename: path.basename(filename),
                 link: link,

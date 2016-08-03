@@ -1,10 +1,14 @@
 var EventEmitter = require('events');
 var util = require('util');
+var client = require('socket.io-client');
 
 var apiKey = "880eaa008f725db601350115c2b7943d6b94fc2dfb9fe70b5440fe6be4abc116";
 
 var device = require('nexus.io').device;
 var devices = [];
+
+
+
 
 function Network () {
 
@@ -31,8 +35,8 @@ function Network () {
     });
 
     this.currentDevice.on('devices', function (newDevices) {
-        //console.log('devices');
-        //console.log(newDevices);
+        console.log('devices');
+        console.log(newDevices);
         Network.devices = newDevices;
         Network.emit('state-changed');
     });
@@ -42,6 +46,9 @@ function Network () {
         //console.log(newDevice);
         Network.devices.push(newDevice);
         Network.emit('state-changed');
+        Network.detectServices(newDevice, function () {
+            Network.emit('state-changed');
+        });
     });
 
     this.currentDevice.on('device-leaved', function (oldDevice) {
@@ -77,6 +84,42 @@ function Network () {
         });
         return deviceFound;
     }
+
+    this.getHttpUrl = function (targetDevice) {
+        return 'http://'+targetDevice.privateIp+':'+Network.port;
+    };
+
+    this.detectServices = function (targetDevice, callback) {
+        var socket = client(getHttpUrl(targetDevice), {
+            reconnection: false
+        });
+
+        socket.on('connect', function () {
+            targetDevice.accessible = true;
+            socket.emit('detect-services');
+            callback && callback();
+        });
+
+        socket.on('connect_error', function (error) {
+            console.log(error);
+        });
+
+        socket.on('connect_timeout', function () {
+            console.log('timeout');
+            targetDevice.accessible = false;
+            callback && callback();
+        });
+
+        socket.on('services', function (services) {
+            targetDevice.services = services;
+            socket.disconnect();
+            callback && callback();
+        });
+
+        socket.on('disconnect', function () {
+            console.log('disconnection');
+        });
+    };
 }
 
 util.inherits(Network, EventEmitter);

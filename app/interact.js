@@ -52,7 +52,7 @@ function showDialog (icon, action, acceptCallback, refuseCallback) {
 
     if (null != deviceSrc) {
         switch (action.id) {
-            case 'transfer-file':
+            case 'file-transfer':
             var filename = action.meta.filename;
             var size = action.meta.size;
             question= deviceSrc.name+' wants to send to you the file "'+filename+'". Do you accept the transfer ?';

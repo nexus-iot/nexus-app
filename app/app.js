@@ -44,9 +44,15 @@ function setupMenu (devices) {
         var devicesAdded = 0;
         devices.forEach (function (device) {
             if (device.id != network.currentDevice.id) {
-                menu.append(new MenuItem({label:device.name, type:'normal', click: function () {
-                    interact.transferFile(device);
-                }}));
+
+                if (device.accessible) {
+                    menu.append(new MenuItem({label:device.name, type:'normal', click: function () {
+                        interact.transferFile(device);
+                    }}));
+                } else {
+                    menu.append(new MenuItem({label:device.name, type:'normal', enabled: false}));
+                }
+
                 devicesAdded++;
             }
         });
@@ -244,6 +250,10 @@ io.on('connection', function (socket) {
     var action = null;
     var device = null
 
+    socket.on('detect-services', function () {
+        socket.emit('services', [{id:'file-transfer'}]);
+    });
+
     socket.on('ask', function (newAction) {
         action = newAction;
         interact.showDialog(icon.icon, action,
@@ -257,7 +267,6 @@ io.on('connection', function (socket) {
         })
 
     });
-
 
     socket.on('lets-go', function () {
         if (!validated && action && action) {
